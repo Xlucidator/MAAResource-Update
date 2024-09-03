@@ -3,13 +3,13 @@
 skip_download=false
 
 rsrc_url=https://github.com/MaaAssistantArknights/MaaResource/archive/refs/heads/main.zip
-maa_dir=MAA-v5.5.11452-win-x64
+maa_dir=MAA-v5.5.0-beta.1-win-x64
 
 maarsrc_dir=MaaResource-main
 zip_file=${maarsrc_dir}.zip
 # zip_file=$(basename "$rsrc_url")
 
-if [ -d "$dst_dir" ]; then
+if [ ! -d "$maa_dir" ]; then
     echo "[error] Target MAA directory do not exist"
     exit 1
 fi
