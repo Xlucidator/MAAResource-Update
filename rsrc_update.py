@@ -2,10 +2,10 @@ import shutil
 import requests # need pip installation
 import zipfile
 from pathlib import Path
+from tqdm import tqdm # need pip installation
 
 rsrc_url = "https://github.com/MaaAssistantArknights/MaaResource/archive/refs/heads/main.zip"
-# maa_dir = Path("MAA-v5.5.11452-win-x64")
-maa_dir = Path("test")
+maa_dir = Path("MAA-v5.5.11452-win-x64")
 maarsrc_dir = Path("MaaResource-main")
 zip_file = maarsrc_dir.with_suffix(".zip")
 
@@ -23,9 +23,14 @@ def download_file():
     try:
         response = requests.get(rsrc_url, stream=True)
         response.raise_for_status()
-        with zip_file.open('wb') as file:
+
+        total_size = int(response.headers.get('content-length', 0)) # tqdm: for size
+        with zip_file.open('wb') as file, tqdm(total=total_size, unit='B', unit_scale=True, desc=zip_file.name) as bar:
             for chunk in response.iter_content(chunk_size=8192):
-                file.write(chunk)
+                if chunk:  # write and update bar only when chunk isn't null
+                    file.write(chunk)
+                    bar.update(len(chunk))  # tqdm: update bar
+                    
     except requests.RequestException as e:
         print(f"[error] Download failed: {e}")
         raise
@@ -35,7 +40,11 @@ def unzip_file():
     print("Unzipping the file ...")
     try:
         with zipfile.ZipFile(zip_file, 'r') as zip_ref:
-            zip_ref.extractall()
+            total_size = sum(file.file_size for file in zip_ref.infolist()) # tqdm: for size
+            with tqdm(total=total_size, unit='B', unit_scale=True, desc="Extracting") as bar:
+                for file_info in zip_ref.infolist():
+                    zip_ref.extract(file_info, maarsrc_dir)
+                    bar.update(file_info.file_size)  # tqdm: update bar
     except zipfile.BadZipFile as e:
         print(f"[error] Unzip failed: {e}")
         clean_up()
@@ -61,7 +70,6 @@ def main(skip_download):
     
     unzip_file()
     process_file(maa_dir)
-    clean_up()
 
 if __name__ == "__main__":
     import argparse
