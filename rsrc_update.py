@@ -1,26 +1,20 @@
-# Haven't been checked
-
-import os
-import sys
 import shutil
-import requests
+import requests # need pip installation
 import zipfile
 from pathlib import Path
 
-skip_download = False
-
 rsrc_url = "https://github.com/MaaAssistantArknights/MaaResource/archive/refs/heads/main.zip"
-maa_dir = "MAA-v5.5.11452-win-x64"
-
-maarsrc_dir = "MaaResource-main"
-zip_file = f"{maarsrc_dir}.zip"
+# maa_dir = Path("MAA-v5.5.11452-win-x64")
+maa_dir = Path("test")
+maarsrc_dir = Path("MaaResource-main")
+zip_file = maarsrc_dir.with_suffix(".zip")
 
 # Function to clean up temporary files
 def clean_up():
     print("Cleaning up")
-    if os.path.isfile(zip_file):
-        os.remove(zip_file)
-    if os.path.isdir(maarsrc_dir):
+    if zip_file.exists():
+        zip_file.unlink()
+    if maarsrc_dir.exists():
         shutil.rmtree(maarsrc_dir)
 
 # Function to download the file
@@ -28,13 +22,13 @@ def download_file():
     print(f"Downloading from {rsrc_url} ...")
     try:
         response = requests.get(rsrc_url, stream=True)
-        response.raise_for_status()  # Check if the request was successful
-        with open(zip_file, 'wb') as file:
+        response.raise_for_status()
+        with zip_file.open('wb') as file:
             for chunk in response.iter_content(chunk_size=8192):
                 file.write(chunk)
     except requests.RequestException as e:
         print(f"[error] Download failed: {e}")
-        sys.exit(1)
+        raise
 
 # Function to unzip the file
 def unzip_file():
@@ -45,45 +39,40 @@ def unzip_file():
     except zipfile.BadZipFile as e:
         print(f"[error] Unzip failed: {e}")
         clean_up()
-        sys.exit(1)
+        raise
 
 # Function to process files
-def process_file():
+def process_file(maa_dir):
     print(f"Copying cache/ and resource/ to {maa_dir}")
-    if not os.path.exists(maa_dir):
-        os.makedirs(maa_dir)
+    maa_dir.mkdir(parents=True, exist_ok=True)
     for subdir in ["cache", "resource"]:
-        src_path = Path(maarsrc_dir) / subdir
-        dest_path = Path(maa_dir) / subdir
+        src_path = maarsrc_dir / subdir
+        dest_path = maa_dir / subdir
         if src_path.exists():
             shutil.copytree(src_path, dest_path, dirs_exist_ok=True)
     print("Finished.")
 
-# Parse command line arguments
-def parse_args(args):
-    global skip_download
-    while args:
-        if args[0] in ("-s", "--skip-download"):
-            skip_download = True
-            args.pop(0)
-        elif args[0] in ("-h", "--help"):
-            print("Usage: script.py [-s|--skip-download] [-h|--help]")
-            print("  -s, --skip-download    Skip downloading operation")
-            print("  -h, --help             Show help information")
-            sys.exit(0)
-        else:
-            print(f"Invalid argument: {args[0]}")
-            sys.exit(1)
-
 # Main logic
-if __name__ == "__main__":
-    parse_args(sys.argv[1:])
-
+def main(skip_download):
     if skip_download:
         print("Skip Downloading zip file")
     else:
         download_file()
-
+    
     unzip_file()
-    process_file()
+    process_file(maa_dir)
     clean_up()
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Download and process Maa resources.")
+    parser.add_argument("-s", "--skip-download", action="store_true", help="Skip downloading operation")
+    args = parser.parse_args()
+    
+    try:
+        main(args.skip_download)
+    except KeyboardInterrupt:
+        print("\n[info] Detected Ctrl+C, preparing to exit...")
+    finally:
+        clean_up()
+        print("Program Terminated.")
