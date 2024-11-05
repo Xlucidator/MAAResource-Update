@@ -4,7 +4,7 @@ setlocal
 set "skip_download=false"
 
 set "rsrc_url=https://github.com/MaaAssistantArknights/MaaResource/archive/refs/heads/main.zip"
-set "maa_dir=MAA-v5.5.0-beta.1-win-x64"
+set "maa_dir=MAA-v5.5.11452-win-x64"
 set "maarsrc_dir=MaaResource-main"
 set "zip_file=%maarsrc_dir%.zip"
 

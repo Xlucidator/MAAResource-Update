@@ -1,3 +1,5 @@
+> 好像10-21把手动资源更新方式加回来了，在MAA中“设置”-“软件更新”中有“资源更新”按钮了（v5.8.0-beta.2之后）
+
 # MAAResource-Update
 
 从MaaAssistantArknights/MaaResource更新资源的脚本，资源地址：https://github.com/MaaAssistantArknights/MaaResource/archive/refs/heads/main.zip
